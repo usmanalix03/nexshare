@@ -1,0 +1,197 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   index.css — Tailwind CSS v4 | Mobile-first dark theme
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
+@import "tailwindcss";
+
+/* ── Design Tokens ────────────────────────────────────────────────────────── */
+@theme {
+  --color-bg:          #0d0d0d;
+  --color-surface:     #161616;
+  --color-surface-2:   #1e1e1e;
+  --color-surface-3:   #252525;
+  --color-border:      rgba(255,255,255,0.08);
+  --color-border-strong: rgba(255,255,255,0.15);
+
+  --color-text-1:      #f5f5f5;
+  --color-text-2:      #a0a0a0;
+  --color-text-3:      #606060;
+
+  --color-blue:        #3b82f6;
+  --color-blue-dim:    rgba(59,130,246,0.12);
+  --color-purple:      #a855f7;
+  --color-purple-dim:  rgba(168,85,247,0.12);
+  --color-green:       #22c55e;
+  --color-red:         #ef4444;
+  --color-red-dim:     rgba(239,68,68,0.12);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────────── */
+@utility card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 28px 24px;
+}
+@utility input {
+  width: 100%;
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  font-size: 17px;
+  color: var(--color-text-1);
+  font-family: var(--font-sans);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  -webkit-appearance: none; /* Remove iOS default styles */
+}
+@utility label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-2);
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+@utility btnblue {
+  background: var(--color-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 18px 28px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: opacity 0.15s, transform 0.1s;
+}
+@utility btnpurple {
+  background: var(--color-purple);
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 18px 28px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: opacity 0.15s, transform 0.1s;
+}
+@utility btnghost {
+  background: transparent;
+  color: var(--color-text-2);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-border);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: border-color 0.15s, background 0.15s;
+}
+@utility badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Base Styles ──────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  /* Prevent font size inflation on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-1);
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(59,130,246,0.08) 0%, transparent 100%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(168,85,247,0.08) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Input states */
+.input:hover { border-color: var(--color-border-strong); }
+.input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+
+/* Button states */
+.btnblue:hover { opacity: 0.88; }
+.btnblue:active { transform: scale(0.97); }
+.btnblue:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btnpurple:hover { opacity: 0.88; }
+.btnpurple:active { transform: scale(0.97); }
+.btnpurple:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btnghost:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); color: var(--color-text-1); }
+.btnghost:active { transform: scale(0.97); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 4px; }
+
+/* Focus ring */
+:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; border-radius: 4px; }
+
+/* Safe area support for notched phones */
+.safe-top  { padding-top:    max(80px, calc(70px + env(safe-area-inset-top))); }
+.safe-bot  { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
