@@ -22,7 +22,7 @@ const server = http.createServer(app);
 // CLIENT_URL can be a comma-separated list: https://nexshare.vercel.app,http://localhost:5173
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map((o) => o.trim());
+  .map((o) => o.trim().replace(/\/$/, ''));
 
 app.use(cors({
   origin: (origin, callback) => {
