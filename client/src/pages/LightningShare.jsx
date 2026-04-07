@@ -11,7 +11,7 @@ import useWebRTC from '../hooks/useWebRTC';
 const Spinner = ({ color='#fff' }) => <span style={{width:18,height:18,border:`2.5px solid ${color}30`,borderTopColor:color,borderRadius:'50%',animation:'spin 0.7s linear infinite',display:'inline-block',flexShrink:0}} />;
 
 const LightningShare = () => {
-  const { isConnected, radarPeers, joinRoom, sendSignal, onSignal } = useSocket();
+  const { socket, isConnected, radarPeers, joinRoom, sendSignal, onSignal } = useSocket();
   const { sendFile, receiveOffer, transferState, progress } = useWebRTC({ sendSignal, onSignal });
   const [selectedPeer, setSelectedPeer] = useState(null);
   const [file, setFile] = useState(null);
@@ -47,6 +47,11 @@ const LightningShare = () => {
             </span>
           </div>
           <p style={{ fontSize:15, color:'var(--color-text-2)', lineHeight:1.6 }}>Direct P2P file transfer via WebRTC. Files never leave your local network.</p>
+          {isConnected && socket?.id && (
+            <p style={{ fontSize:13, color:'var(--color-text-3)', marginTop: 8 }}>
+              You appear on the radar as: <span style={{ color:'var(--color-neon-cyan)', fontWeight:600 }}>{socket.id.slice(0, 6)}</span>
+            </p>
+          )}
         </div>
       </div>
 
