@@ -53,7 +53,12 @@ const Navbar = () => {
           {/* Desktop auth */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }} className="hidden-mobile">
             {isAuthenticated ? (
-              <button onClick={() => { logout(); navigate('/'); }} className="btnghost" style={{ padding: '10px 18px', fontSize: 14 }}>Log out</button>
+              <>
+                <span style={{ fontSize: 14, color: 'var(--color-text-2)', marginRight: 8 }}>
+                  {user?.email?.split('@')[0]}
+                </span>
+                <button onClick={() => { logout(); navigate('/'); }} className="btnghost" style={{ padding: '10px 18px', fontSize: 14 }}>Log out</button>
+              </>
             ) : (
               <>
                 <Link to="/login" style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-2)', textDecoration: 'none', padding: '8px 12px' }}>Log in</Link>
@@ -95,7 +100,12 @@ const Navbar = () => {
             ))}
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {isAuthenticated ? (
-                <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }} className="btnghost" style={{ width: '100%' }}>Log out</button>
+                <>
+                  <div style={{ fontSize: 15, color: 'var(--color-text-2)', textAlign: 'center', marginBottom: 4 }}>
+                    Logged in as <span style={{ color: 'var(--color-text-1)', fontWeight: 600 }}>{user?.email?.split('@')[0]}</span>
+                  </div>
+                  <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }} className="btnghost" style={{ width: '100%' }}>Log out</button>
+                </>
               ) : (
                 <>
                   <Link to="/login" onClick={() => setMenuOpen(false)} className="btnghost" style={{ textDecoration: 'none', width: '100%', justifyContent: 'center' }}>Log in</Link>
