@@ -127,7 +127,12 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     // Listen for ICE from remote
     onSignal('webrtc:ice-candidate', async ({ fromId, candidate }) => {
       if (fromId !== targetId) return;
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      if (pc.signalingState === 'closed') return;
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('ICE candidate ignored:', e);
+      }
     });
   }, [cleanUp, sendSignal, onSignal]);
 
@@ -163,7 +168,12 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     // Listen for ICE from sender
     onSignal('webrtc:ice-candidate', async ({ fromId: fId, candidate }) => {
       if (fId !== fromId) return;
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      if (pc.signalingState === 'closed') return;
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('ICE candidate ignored:', e);
+      }
     });
   }, [cleanUp, sendSignal, onSignal, setupDataChannel]);
 
