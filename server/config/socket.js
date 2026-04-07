@@ -14,16 +14,20 @@ let io;
  * @param {http.Server} server - The Node.js HTTP server
  */
 const initSocket = (server) => {
-  const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
-    .split(',')
-    .map((o) => o.trim().replace(/\/$/, ''));
+  const parseOrigins = (str) =>
+    str.split(',').map(o => o.trim().replace(/['"]/g, '').replace(/\/$/, ''));
+  const allowedOrigins = parseOrigins(process.env.CLIENT_URL || 'http://localhost:5173');
+
+  const checkOrigin = (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const isAllowed = allowedOrigins.some(allow => origin === allow || origin.includes(allow));
+    if (isAllowed) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed. Configured: ${allowedOrigins.join(' | ')}`));
+  };
 
   io = new Server(server, {
     cors: {
-      origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error(`CORS: origin ${origin} not allowed`));
-      },
+      origin: checkOrigin,
       methods: ['GET', 'POST'],
       credentials: true,
     },

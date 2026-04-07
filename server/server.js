@@ -20,18 +20,20 @@ const server = http.createServer(app);
 
 // ── Middleware ─────────────────────────────────────────────────────────────
 // CLIENT_URL can be a comma-separated list: https://nexshare.vercel.app,http://localhost:5173
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
-  .split(',')
-  .map((o) => o.trim().replace(/\/$/, ''));
+const parseOrigins = (str) =>
+  str.split(',').map(o => o.trim().replace(/['"]/g, '').replace(/\/$/, ''));
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, Render health checks, same-origin)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-}));
+const allowedOrigins = parseOrigins(process.env.CLIENT_URL || 'http://localhost:5173');
+
+const checkOrigin = (origin, callback) => {
+  if (!origin) return callback(null, true);
+  // robust check: either exact match, or origin contains the allowed string (handles missing https://)
+  const isAllowed = allowedOrigins.some(allow => origin === allow || origin.includes(allow));
+  if (isAllowed) return callback(null, true);
+  callback(new Error(`CORS: origin ${origin} not allowed. Configured: ${allowedOrigins.join(' | ')}`));
+};
+
+app.use(cors({ origin: checkOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
