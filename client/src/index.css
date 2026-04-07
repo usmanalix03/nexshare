@@ -25,6 +25,7 @@
   --color-green:       #22c55e;
   --color-red:         #ef4444;
   --color-red-dim:     rgba(239,68,68,0.12);
+  --color-neon-cyan:   #00f5ff;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }

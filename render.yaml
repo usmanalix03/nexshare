@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nexshare-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false   # Set this on the Render dashboard
+      - key: JWT_SECRET
+        sync: false   # Set this on the Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        sync: false   # Set to your Vercel URL (e.g. https://nexshare.vercel.app)

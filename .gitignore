@@ -3,3 +3,5 @@ dist/
 .env
 .DS_Store
 storage/
+server/server_out.txt
+prompt.txt
