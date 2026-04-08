@@ -13,6 +13,7 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
   const channelRef = useRef(null);
   const receivedChunksRef = useRef([]);
   const fileMetaRef = useRef(null);
+  const unsubsRef = useRef([]);
 
   const [transferState, setTransferState] = useState('idle'); // idle | connecting | sending | receiving | done | error
   const [progress, setProgress] = useState(0);
@@ -25,6 +26,8 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     pcRef.current = null;
     receivedChunksRef.current = [];
     fileMetaRef.current = null;
+    unsubsRef.current.forEach(unsub => unsub?.());
+    unsubsRef.current = [];
   }, []);
 
   /** Set up data channel event handlers (same for both sides) */
@@ -120,12 +123,17 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     // Listen for answer
     const offAnswer = onSignal('webrtc:answer', async ({ fromId, answer }) => {
       if (fromId !== targetId) return;
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      offAnswer();
+      if (pc.signalingState === 'closed') return;
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      } catch (err) {
+        console.warn('Failed to set remote description:', err);
+      }
     });
+    unsubsRef.current.push(offAnswer);
 
     // Listen for ICE from remote
-    onSignal('webrtc:ice-candidate', async ({ fromId, candidate }) => {
+    const offIce = onSignal('webrtc:ice-candidate', async ({ fromId, candidate }) => {
       if (fromId !== targetId) return;
       if (pc.signalingState === 'closed') return;
       try {
@@ -134,6 +142,7 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
         console.warn('ICE candidate ignored:', e);
       }
     });
+    unsubsRef.current.push(offIce);
   }, [cleanUp, sendSignal, onSignal]);
 
   /**
@@ -166,7 +175,7 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     sendSignal('webrtc:answer', fromId, { answer });
 
     // Listen for ICE from sender
-    onSignal('webrtc:ice-candidate', async ({ fromId: fId, candidate }) => {
+    const offIce = onSignal('webrtc:ice-candidate', async ({ fromId: fId, candidate }) => {
       if (fId !== fromId) return;
       if (pc.signalingState === 'closed') return;
       try {
@@ -175,6 +184,7 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
         console.warn('ICE candidate ignored:', e);
       }
     });
+    unsubsRef.current.push(offIce);
   }, [cleanUp, sendSignal, onSignal, setupDataChannel]);
 
   return { sendFile, receiveOffer, transferState, progress, cleanUp };
