@@ -85,6 +85,13 @@ const registerSignalingHandlers = (io, socket) => {
     io.to(targetId).emit('webrtc:ice-candidate', { fromId: socket.id, candidate });
   });
 
+  // ── Chat Relay ────────────────────────────────────────────────────────────
+  // Route text messages directly to a specific peer. Server never stores content.
+  socket.on('chat:message', ({ targetId, text }) => {
+    if (!targetId || typeof text !== 'string' || !text.trim()) return;
+    io.to(targetId).emit('chat:message', { fromId: socket.id, text: text.trim() });
+  });
+
   // ── Disconnect Cleanup ────────────────────────────────────────────────────
   socket.on('disconnect', () => {
     // Notify IP room peers about departure
