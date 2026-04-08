@@ -50,7 +50,8 @@ const SecureVault = () => {
     setDownloading(true);
     (async () => {
       try {
-        const res = await fetch(`/api/vault/${id}`);
+        const baseUrl = import.meta.env.VITE_API_URL || '/api';
+        const res = await fetch(`${baseUrl}/vault/${id}`);
         if (!res.ok) { const d=await res.json(); throw new Error(d.error||'Download failed'); }
         const disp=res.headers.get('content-disposition')||'';
         const nm=disp.match(/filename="?([^"]+)"?/);

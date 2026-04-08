@@ -35,12 +35,15 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     channel.binaryType = 'arraybuffer';
     let receivedCount = 0;
 
-    channel.onopen = () => setTransferState('receiving');
+    channel.onopen = () => {
+      console.log('[WebRTC] Data channel OPEN (Receiving)');
+      setTransferState('receiving');
+    };
 
     channel.onmessage = (e) => {
       if (typeof e.data === 'string') {
-        // First message is metadata JSON
         const meta = JSON.parse(e.data);
+        console.log('[WebRTC] Received metadata payload:', meta);
         fileMetaRef.current = meta;
         receivedChunksRef.current = [];
         return;
@@ -64,7 +67,13 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
       }
     };
 
-    channel.onerror = () => setTransferState('error');
+    channel.onerror = (err) => {
+      console.error('[WebRTC] Data channel encountered error:', err);
+      setTransferState('error');
+    };
+    channel.onclose = () => {
+      console.log('[WebRTC] Data channel CLOSED');
+    };
   }, []);
 
   /**
@@ -80,15 +89,23 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     const pc = createPeerConnection();
     pcRef.current = pc;
 
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[WebRTC] Caller ICE State: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+         setTransferState('error');
+      }
+    };
+
     // Create data channel (initiator side)
     const channel = pc.createDataChannel('fileTransfer', { ordered: true });
     channelRef.current = channel;
 
     const chunks = await chunkFile(file);
+    console.log(`[WebRTC] File chunked into ${chunks.length} pieces, pending channel open...`);
 
     channel.onopen = async () => {
+      console.log('[WebRTC] Data channel OPEN (Sending)');
       setTransferState('sending');
-      // Send metadata first
       channel.send(JSON.stringify({
         filename: file.name,
         mimeType: file.type,
@@ -108,7 +125,13 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
       setTransferState('done');
     };
 
-    channel.onerror = () => setTransferState('error');
+    channel.onerror = (err) => {
+      console.error('[WebRTC] Send channel encountered an error:', err);
+      setTransferState('error');
+    };
+    channel.onclose = () => {
+      console.log('[WebRTC] Send channel CLOSED');
+    };
 
     // ICE candidates → relay via signaling server
     pc.onicecandidate = ({ candidate }) => {
@@ -178,8 +201,16 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
     const pc = createPeerConnection();
     pcRef.current = pc;
 
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[WebRTC] Receiver ICE State: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+         setTransferState('error');
+      }
+    };
+
     // Receiver sets up data channel via ondatachannel event
     pc.ondatachannel = ({ channel }) => {
+      console.log('[WebRTC] Received isolated data channel from caller');
       channelRef.current = channel;
       setupDataChannel(channel);
     };
