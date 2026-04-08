@@ -115,17 +115,22 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
       if (candidate) sendSignal('webrtc:ice-candidate', targetId, { candidate });
     };
 
-    // Create and send offer
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    sendSignal('webrtc:offer', targetId, { offer });
+    const iceQueue = [];
 
     // Listen for answer
     const offAnswer = onSignal('webrtc:answer', async ({ fromId, answer }) => {
       if (fromId !== targetId) return;
       if (pc.signalingState === 'closed') return;
+      if (pc.signalingState !== 'have-local-offer') {
+        console.warn('Ignoring an incoming answer while in wrong state:', pc.signalingState);
+        return;
+      }
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        while (iceQueue.length) {
+          const c = iceQueue.shift();
+          pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+        }
       } catch (err) {
         console.warn('Failed to set remote description:', err);
       }
@@ -137,12 +142,26 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
       if (fromId !== targetId) return;
       if (pc.signalingState === 'closed') return;
       try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        if (!pc.remoteDescription) {
+          iceQueue.push(candidate);
+        } else {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
       } catch (e) {
         console.warn('ICE candidate ignored:', e);
       }
     });
     unsubsRef.current.push(offIce);
+
+    // Create and send offer
+    try {
+      const offer = await pc.createOffer();
+      if (pc.signalingState === 'closed') return;
+      await pc.setLocalDescription(offer);
+      sendSignal('webrtc:offer', targetId, { offer });
+    } catch (e) {
+      console.warn("Failed to initiate offer:", e);
+    }
   }, [cleanUp, sendSignal, onSignal]);
 
   /**
@@ -169,22 +188,42 @@ const useWebRTC = ({ sendSignal, onSignal }) => {
       if (candidate) sendSignal('webrtc:ice-candidate', fromId, { candidate });
     };
 
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    sendSignal('webrtc:answer', fromId, { answer });
+    const iceQueue = [];
 
-    // Listen for ICE from sender
+    // Listen for ICE from sender BEFORE awaiting async WebRTC tasks
     const offIce = onSignal('webrtc:ice-candidate', async ({ fromId: fId, candidate }) => {
       if (fId !== fromId) return;
       if (pc.signalingState === 'closed') return;
       try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        if (!pc.remoteDescription) {
+          iceQueue.push(candidate);
+        } else {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
       } catch (e) {
         console.warn('ICE candidate ignored:', e);
       }
     });
     unsubsRef.current.push(offIce);
+
+    try {
+      if (pc.signalingState !== 'stable') {
+        console.warn("receiveOffer called but pc is not stable");
+        return;
+      }
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      // Process early ICE candidates
+      while (iceQueue.length) {
+        const c = iceQueue.shift();
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+      }
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      sendSignal('webrtc:answer', fromId, { answer });
+    } catch (e) {
+      console.warn("Failed to process incoming offer:", e);
+    }
   }, [cleanUp, sendSignal, onSignal, setupDataChannel]);
 
   return { sendFile, receiveOffer, transferState, progress, cleanUp };
